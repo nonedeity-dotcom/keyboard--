@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">RU/EN Клавиатура</string>
+    <string name="app_name">Ketra</string>
     <string name="intro_text">1. Включите клавиатуру в системных настройках.\n2. Выберите её как активный метод ввода.\n3. Все данные (в т.ч. история буфера обмена) хранятся только на этом устройстве и никуда не передаются.</string>
     <string name="btn_enable">Включить клавиатуру в настройках</string>
     <string name="btn_switch">Выбрать клавиатуру для ввода</string>

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <dimen name="key_height">56dp</dimen>
+    <dimen name="key_height">62dp</dimen>
     <dimen name="top_bar_height">38dp</dimen>
     <dimen name="panel_height">224dp</dimen>
     <dimen name="clip_item_padding">12dp</dimen>

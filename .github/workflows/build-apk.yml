@@ -9,7 +9,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 18
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -29,8 +29,27 @@ jobs:
       - name: Build debug APK
         run: ./gradlew assembleDebug --no-daemon --max-workers=2
 
+      - name: Run unit tests (incl. keyboard render/screenshot tests)
+        run: ./gradlew testDebugUnitTest --no-daemon --max-workers=2
+
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Upload keyboard screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: keyboard-screenshots
+          path: app/build/screenshots/*.png
+          if-no-files-found: warn
+
+      - name: Upload unit test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-report
+          path: app/build/reports/tests/testDebugUnitTest
+          if-no-files-found: warn

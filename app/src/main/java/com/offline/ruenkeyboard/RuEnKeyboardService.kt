@@ -189,14 +189,11 @@ class RuEnKeyboardService : InputMethodService(), KeyboardView.OnKeyboardActionL
             if (key.codes.isNotEmpty() && key.codes[0] == CODE_SHIFT) {
                 key.label = if (shiftState == ShiftState.CAPS) "⇪" else "⇧"
             } else {
-                val label = key.label
-                if (label != null && label.length == 1 && Character.isLetter(label[0])) {
-                    key.label = if (shiftState != ShiftState.NONE) {
-                        label.toString().uppercase()
-                    } else {
-                        label.toString().lowercase()
-                    }
-                }
+                key.label = labelForShiftState(
+                    label = key.label,
+                    isLetterMode = mode == Mode.LETTERS,
+                    shifted = shiftState != ShiftState.NONE
+                )
             }
         }
         keyboardView.invalidateAllKeys()

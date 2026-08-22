@@ -128,7 +128,19 @@ class RuEnKeyboardService : InputMethodService(), KeyboardView.OnKeyboardActionL
             mode == Mode.LETTERS && lang == Lang.RU -> DIGIT_HINTS_RU
             else -> emptyMap()
         }
+        applyLangLabel()
         applyShiftVisuals()
+    }
+
+    private fun applyLangLabel() {
+        val keyboard = keyboardView.keyboard ?: return
+        if (mode != Mode.LETTERS) return
+        val label = if (lang == Lang.RU) "Русский" else "English"
+        for (key in keyboard.keys) {
+            if (key.codes.isNotEmpty() && key.codes[0] == 32) {
+                key.label = label
+            }
+        }
     }
 
     private fun applyShiftVisuals() {

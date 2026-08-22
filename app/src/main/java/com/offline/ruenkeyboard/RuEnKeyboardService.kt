@@ -33,7 +33,8 @@ class RuEnKeyboardService : InputMethodService(), KeyboardView.OnKeyboardActionL
         const val CODE_CURSOR_RIGHT = -19
 
         private const val SHIFT_DOUBLE_TAP_MS = 300L
-        private const val SHIFT_LONG_PRESS_MS = 400L
+        // Реальное значение из референс-клавиатуры (config_longpress_shift_lock_timeout).
+        private const val SHIFT_LONG_PRESS_MS = 800L
 
         private val DIGIT_HINTS_EN = mapOf(
             113 to "1", 119 to "2", 101 to "3", 114 to "4", 116 to "5",

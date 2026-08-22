@@ -13,6 +13,7 @@ import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
@@ -29,6 +30,7 @@ import java.util.Base64
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33])
+@GraphicsMode(GraphicsMode.Mode.NATIVE)
 class KeyboardScreenshotTest {
 
     private val outDir = File("build/screenshots").apply { mkdirs() }

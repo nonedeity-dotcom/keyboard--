@@ -1,15 +1,19 @@
 package com.offline.ruenkeyboard
 
+import android.app.Activity
 import android.inputmethodservice.Keyboard
+import android.os.Looper
 import android.os.SystemClock
 import android.view.MotionEvent
 import android.view.View
-import androidx.test.core.app.ApplicationProvider
+import android.view.ViewGroup
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 
 /**
@@ -21,11 +25,11 @@ import org.robolectric.annotation.Config
 class SwipeGestureTest {
 
     private fun buildLaidOutView(): HintKeyboardView {
-        val context = ApplicationProvider.getApplicationContext<android.content.Context>()
-        val view = HintKeyboardView(context, null)
-        // The real KeyboardView base class touches the action listener from
-        // its own onTouchEvent(); without one set it NPEs on the very first
-        // dispatched event, which is what happened when this was missing.
+        // KeyboardView's internal mGestureDetector (and other lazily-built
+        // state) is only created once the view is actually attached to a
+        // window — a bare, detached View NPEs on the very first touch event.
+        val activity = Robolectric.buildActivity(Activity::class.java).setup().get()
+        val view = HintKeyboardView(activity, null)
         view.setOnKeyboardActionListener(object : android.inputmethodservice.KeyboardView.OnKeyboardActionListener {
             override fun onPress(primaryCode: Int) {}
             override fun onRelease(primaryCode: Int) {}
@@ -36,12 +40,13 @@ class SwipeGestureTest {
             override fun swipeDown() {}
             override fun swipeUp() {}
         })
-        view.keyboard = Keyboard(context, R.xml.keyboard_ru)
+        view.keyboard = Keyboard(activity, R.xml.keyboard_ru)
 
-        val widthSpec = View.MeasureSpec.makeMeasureSpec(1080, View.MeasureSpec.EXACTLY)
-        val heightSpec = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
-        view.measure(widthSpec, heightSpec)
-        view.layout(0, 0, view.measuredWidth, view.measuredHeight)
+        activity.addContentView(
+            view,
+            ViewGroup.LayoutParams(1080, ViewGroup.LayoutParams.WRAP_CONTENT)
+        )
+        shadowOf(Looper.getMainLooper()).idle()
         return view
     }
 

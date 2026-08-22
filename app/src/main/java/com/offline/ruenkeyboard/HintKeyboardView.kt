@@ -4,10 +4,16 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.RectF
+import android.inputmethodservice.Keyboard
 import android.inputmethodservice.KeyboardView
 import android.util.AttributeSet
+import android.view.Gravity
 import android.view.MotionEvent
+import android.widget.GridLayout
+import android.widget.PopupWindow
+import android.widget.TextView
 import kotlin.math.abs
+import kotlin.math.ceil
 
 /**
  * KeyboardView с цифровыми подсказками в углах клавиш (как у Gboard)
@@ -49,6 +55,110 @@ class HintKeyboardView(context: Context, attrs: AttributeSet?) : KeyboardView(co
     private val cornerRadiusPx = 10f * density
     private val hintMarginPx = 8f * density
 
+    // Собственный попап долгого нажатия вместо стокового KeyboardView-механизма:
+    // у стокового попапа выбор символа обрывается, если палец уходит за пределы
+    // строго той же строки, и он не подтверждает/закрывается сам при отпускании
+    // (нужен отдельный крестик) — у современных клавиатур (например, Emoji
+    // Keyboard) выбор свободный по всей ширине попапа и подтверждается прямо
+    // при отпускании пальца.
+    private var actionListener: OnKeyboardActionListener? = null
+    private var popupWindow: PopupWindow? = null
+    private var popupCells: List<TextView> = emptyList()
+    private var popupChars: String = ""
+    private var popupSelectedIndex: Int = -1
+    private var popupLeftPx = 0f
+    private var popupCellWidthPx = 1f
+    private val popupMaxColumns = 8
+    private val popupCellSizePx = (44f * density).toInt()
+
+    override fun setOnKeyboardActionListener(listener: OnKeyboardActionListener) {
+        actionListener = listener
+        super.setOnKeyboardActionListener(listener)
+    }
+
+    override fun onLongPress(popupKey: Keyboard.Key): Boolean {
+        val chars = popupKey.popupCharacters
+        if (chars.isNullOrEmpty()) return super.onLongPress(popupKey)
+        showCharacterPopup(popupKey, chars.toString())
+        return true
+    }
+
+    private fun showCharacterPopup(key: Keyboard.Key, chars: String) {
+        dismissPopup()
+        popupChars = chars
+
+        val columns = minOf(chars.length, popupMaxColumns)
+        val rows = ceil(chars.length / columns.toDouble()).toInt()
+        val popupWidth = popupCellSizePx * columns
+        val popupHeight = popupCellSizePx * rows
+
+        val grid = GridLayout(context).apply {
+            columnCount = columns
+            rowCount = rows
+            setBackgroundColor(context.getColor(R.color.key_bg_special))
+        }
+        val cells = mutableListOf<TextView>()
+        for (ch in chars) {
+            val cell = TextView(context).apply {
+                text = ch.toString()
+                textSize = 20f
+                gravity = Gravity.CENTER
+                setTextColor(context.getColor(R.color.key_text))
+                setBackgroundColor(context.getColor(R.color.key_bg_special))
+                layoutParams = GridLayout.LayoutParams().apply {
+                    width = popupCellSizePx
+                    height = popupCellSizePx
+                }
+            }
+            cells.add(cell)
+            grid.addView(cell)
+        }
+        popupCells = cells
+
+        popupLeftPx = (key.x + key.width / 2f - popupWidth / 2f)
+            .coerceIn(0f, (width - popupWidth).coerceAtLeast(0).toFloat())
+        popupCellWidthPx = popupWidth / columns.toFloat()
+
+        popupSelectedIndex = -1
+        updatePopupSelection(key.x + key.width / 2f)
+
+        val location = IntArray(2)
+        getLocationInWindow(location)
+        val popupY = location[1] + key.y - popupHeight - (4f * density).toInt()
+
+        val pw = PopupWindow(grid, popupWidth, popupHeight, false)
+        pw.isTouchable = false
+        pw.showAtLocation(this, Gravity.NO_GRAVITY, (location[0] + popupLeftPx).toInt(), popupY)
+        popupWindow = pw
+    }
+
+    private fun updatePopupSelection(touchX: Float) {
+        if (popupChars.isEmpty()) return
+        val index = (((touchX - popupLeftPx) / popupCellWidthPx).toInt())
+            .coerceIn(0, popupChars.length - 1)
+        if (index != popupSelectedIndex) {
+            popupCells.getOrNull(popupSelectedIndex)?.setBackgroundColor(context.getColor(R.color.key_bg_special))
+            popupCells.getOrNull(index)?.setBackgroundColor(context.getColor(R.color.key_bg_accent))
+            popupSelectedIndex = index
+        }
+    }
+
+    private fun commitPopupSelection() {
+        val index = popupSelectedIndex
+        if (index in popupChars.indices) {
+            actionListener?.onKey(popupChars[index].code, null)
+        }
+        dismissPopup()
+    }
+
+    private fun dismissPopup() {
+        popupWindow?.dismiss()
+        popupWindow = null
+        popupCells = emptyList()
+        popupChars = ""
+        popupSelectedIndex = -1
+    }
+
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         val kb = keyboard ?: return
@@ -88,6 +198,24 @@ class HintKeyboardView(context: Context, attrs: AttributeSet?) : KeyboardView(co
      * ещё и обычный тап по клавише пробела/соседним клавишам.
      */
     override fun onTouchEvent(event: MotionEvent): Boolean {
+        if (popupWindow != null) {
+            when (event.actionMasked) {
+                MotionEvent.ACTION_MOVE -> updatePopupSelection(event.x)
+                MotionEvent.ACTION_UP -> {
+                    commitPopupSelection()
+                    val cancelEvent = MotionEvent.obtain(event)
+                    cancelEvent.action = MotionEvent.ACTION_CANCEL
+                    super.onTouchEvent(cancelEvent)
+                    cancelEvent.recycle()
+                }
+                MotionEvent.ACTION_CANCEL -> {
+                    dismissPopup()
+                    super.onTouchEvent(event)
+                }
+            }
+            return true
+        }
+
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
                 downX = event.x

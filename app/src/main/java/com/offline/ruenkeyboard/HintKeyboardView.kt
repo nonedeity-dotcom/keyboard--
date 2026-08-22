@@ -45,7 +45,7 @@ class HintKeyboardView(context: Context, attrs: AttributeSet?) : KeyboardView(co
         textAlign = Paint.Align.CENTER
     }
 
-    private val gapPx = 3f * density
+    private val gapPx = 1.5f * density
     private val cornerRadiusPx = 8f * density
     private val hintMarginPx = 8f * density
 

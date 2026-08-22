@@ -3,7 +3,7 @@
     android:keyWidth="10%p"
     android:keyHeight="@dimen/key_height"
     android:horizontalGap="0px"
-    android:verticalGap="6dp">
+    android:verticalGap="10dp">
 
     <Row>
         <Key android:codes="113" android:keyLabel="q" android:popupKeyboard="@xml/keyboard_popup_template" android:popupCharacters="1" />

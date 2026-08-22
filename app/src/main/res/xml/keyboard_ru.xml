@@ -2,7 +2,7 @@
 <Keyboard xmlns:android="http://schemas.android.com/apk/res/android"
     android:keyHeight="@dimen/key_height"
     android:horizontalGap="0px"
-    android:verticalGap="6dp">
+    android:verticalGap="10dp">
 
     <Row android:keyWidth="9.09%p">
         <Key android:codes="1081" android:keyLabel="й" android:popupKeyboard="@xml/keyboard_popup_template" android:popupCharacters="1" />

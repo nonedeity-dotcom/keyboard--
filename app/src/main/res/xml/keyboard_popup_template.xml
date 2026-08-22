@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Пустой шаблон-метрика для всплывающих мини-клавиатур (долгое нажатие).
+    KeyboardView.onLongPress() требует android:popupKeyboard на каждой клавише
+    с popupCharacters — без него popupResId остаётся 0 и попап не открывается
+    вообще, даже если popupCharacters заполнены.
+-->
+<Keyboard xmlns:android="http://schemas.android.com/apk/res/android"
+    android:keyWidth="10%p"
+    android:keyHeight="@dimen/key_height">
+</Keyboard>

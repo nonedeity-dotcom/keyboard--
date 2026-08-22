@@ -40,7 +40,11 @@ class KeyboardScreenshotTest {
     // что показала бы настоящая клавиатура, а не голый KeyboardView без хинтов.
     private val digitHintsEn = mapOf(
         113 to "1", 119 to "2", 101 to "3", 114 to "4", 116 to "5",
-        121 to "6", 117 to "7", 105 to "8", 111 to "9", 112 to "0"
+        121 to "6", 117 to "7", 105 to "8", 111 to "9", 112 to "0",
+        97 to "@", 115 to "#", 100 to "$", 102 to "_", 103 to "&",
+        104 to "-", 106 to "+", 107 to "(", 108 to ")",
+        122 to "*", 120 to "\"", 99 to "'", 118 to ":", 98 to ";",
+        110 to "!", 109 to "?"
     )
     private val ruHints = mapOf(
         1081 to "1", 1094 to "2", 1091 to "3", 1082 to "4", 1077 to "5",

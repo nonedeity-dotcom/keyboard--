@@ -36,7 +36,11 @@ class RuEnKeyboardService : InputMethodService(), KeyboardView.OnKeyboardActionL
 
         private val DIGIT_HINTS_EN = mapOf(
             113 to "1", 119 to "2", 101 to "3", 114 to "4", 116 to "5",
-            121 to "6", 117 to "7", 105 to "8", 111 to "9", 112 to "0"
+            121 to "6", 117 to "7", 105 to "8", 111 to "9", 112 to "0",
+            97 to "@", 115 to "#", 100 to "$", 102 to "_", 103 to "&",
+            104 to "-", 106 to "+", 107 to "(", 108 to ")",
+            122 to "*", 120 to "\"", 99 to "'", 118 to ":", 98 to ";",
+            110 to "!", 109 to "?"
         )
         private val RU_HINTS = mapOf(
             1081 to "1", 1094 to "2", 1091 to "3", 1082 to "4", 1077 to "5",
@@ -97,6 +101,11 @@ class RuEnKeyboardService : InputMethodService(), KeyboardView.OnKeyboardActionL
         keyboardView.setOnKeyboardActionListener(this)
         keyboardView.accentCode = CODE_ENTER
         keyboardView.onSwipeLanguage = { switchLanguage() }
+        // Стоковый попап-превью клавиши (увеличенная буква над пальцем) у
+        // KeyboardView позиционируется нестабильно на части прошивок и
+        // рисуется поверх системного UI — современные клавиатуры его не
+        // используют, ограничиваясь подсветкой клавиши.
+        keyboardView.isPreviewEnabled = false
 
         containerView.findViewById<TextView>(R.id.btn_open_clipboard).setOnClickListener {
             openClipboardPanel()

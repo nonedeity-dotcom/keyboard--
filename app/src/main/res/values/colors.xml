@@ -1,10 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="keyboard_bg">#F1F3F4</color>
-    <color name="key_bg">#FFFFFF</color>
-    <color name="key_bg_special">#D5D9DC</color>
-    <color name="key_text">#1F1F1F</color>
-    <color name="panel_bg">#FFFFFF</color>
-    <color name="clip_item_bg">#F1F3F4</color>
-    <color name="divider">#DADCE0</color>
+    <color name="keyboard_bg">#1E1F22</color>
+    <color name="top_bar_bg">#1E1F22</color>
+    <color name="key_bg">#3A3B3E</color>
+    <color name="key_bg_special">#525356</color>
+    <color name="key_bg_accent">#4C8DF6</color>
+    <color name="key_text">#F2F2F2</color>
+    <color name="key_hint">#8A8B8E</color>
+    <color name="key_icon">#C9CACD</color>
+    <color name="panel_bg">#1E1F22</color>
+    <color name="clip_item_bg">#3A3B3E</color>
+    <color name="divider">#38393C</color>
 </resources>

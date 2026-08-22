@@ -28,15 +28,25 @@ class RuEnKeyboardService : InputMethodService(), KeyboardView.OnKeyboardActionL
         const val CODE_TO_LETTERS = -13
         const val CODE_LANG_SWITCH = -14
         const val CODE_ENTER = -15
-        const val CODE_CLIPBOARD_OPEN = -16
+        const val CODE_EMOJI = -16
 
         private const val SHIFT_DOUBLE_TAP_MS = 300L
+
+        private val DIGIT_HINTS_EN = mapOf(
+            113 to "1", 119 to "2", 101 to "3", 114 to "4", 116 to "5",
+            121 to "6", 117 to "7", 105 to "8", 111 to "9", 112 to "0"
+        )
+        private val DIGIT_HINTS_RU = mapOf(
+            1081 to "1", 1094 to "2", 1091 to "3", 1082 to "4", 1077 to "5",
+            1085 to "6", 1075 to "7", 1096 to "8", 1097 to "9", 1079 to "0"
+        )
     }
 
-    private lateinit var keyboardView: KeyboardView
+    private lateinit var keyboardView: HintKeyboardView
     private lateinit var containerView: View
     private lateinit var clipboardPanelView: View
     private lateinit var clipListContainer: LinearLayout
+    private lateinit var emojiPanelView: View
 
     private lateinit var enKeyboard: Keyboard
     private lateinit var ruKeyboard: Keyboard
@@ -70,19 +80,27 @@ class RuEnKeyboardService : InputMethodService(), KeyboardView.OnKeyboardActionL
         keyboardView = containerView.findViewById(R.id.keyboard_view)
         clipboardPanelView = containerView.findViewById(R.id.clipboard_panel)
         clipListContainer = clipboardPanelView.findViewById(R.id.clip_list_container)
+        emojiPanelView = containerView.findViewById(R.id.emoji_panel)
 
         enKeyboard = Keyboard(this, R.xml.keyboard_en)
         ruKeyboard = Keyboard(this, R.xml.keyboard_ru)
         symbolsKeyboard = Keyboard(this, R.xml.keyboard_symbols)
 
         keyboardView.setOnKeyboardActionListener(this)
+        keyboardView.accentCode = CODE_ENTER
 
+        containerView.findViewById<TextView>(R.id.btn_open_clipboard).setOnClickListener {
+            openClipboardPanel()
+        }
         clipboardPanelView.findViewById<TextView>(R.id.btn_clip_back).setOnClickListener {
-            closeClipboardPanel()
+            closePanels()
         }
         clipboardPanelView.findViewById<TextView>(R.id.btn_clip_clear).setOnClickListener {
             clipboardStore.clear()
             renderClipboardList()
+        }
+        emojiPanelView.findViewById<TextView>(R.id.btn_emoji_back).setOnClickListener {
+            closePanels()
         }
 
         applyKeyboard()
@@ -93,7 +111,7 @@ class RuEnKeyboardService : InputMethodService(), KeyboardView.OnKeyboardActionL
         super.onStartInputView(info, restarting)
         mode = Mode.LETTERS
         shiftState = ShiftState.NONE
-        closeClipboardPanel()
+        closePanels()
         applyKeyboard()
     }
 
@@ -105,6 +123,11 @@ class RuEnKeyboardService : InputMethodService(), KeyboardView.OnKeyboardActionL
             Mode.LETTERS -> if (lang == Lang.RU) ruKeyboard else enKeyboard
         }
         keyboardView.keyboard = keyboard
+        keyboardView.hints = when {
+            mode == Mode.LETTERS && lang == Lang.EN -> DIGIT_HINTS_EN
+            mode == Mode.LETTERS && lang == Lang.RU -> DIGIT_HINTS_RU
+            else -> emptyMap()
+        }
         applyShiftVisuals()
     }
 
@@ -165,7 +188,7 @@ class RuEnKeyboardService : InputMethodService(), KeyboardView.OnKeyboardActionL
                 applyKeyboard()
             }
             CODE_ENTER -> performEnter(ic)
-            CODE_CLIPBOARD_OPEN -> openClipboardPanel()
+            CODE_EMOJI -> openEmojiPanel()
             else -> {
                 if (primaryCode > 0) {
                     val codeToCommit = if (shiftState != ShiftState.NONE && Character.isLetter(primaryCode)) {
@@ -196,6 +219,27 @@ class RuEnKeyboardService : InputMethodService(), KeyboardView.OnKeyboardActionL
         }
     }
 
+    // --- Панели (буфер обмена / эмодзи) ---
+
+    private fun openClipboardPanel() {
+        renderClipboardList()
+        keyboardView.visibility = View.GONE
+        emojiPanelView.visibility = View.GONE
+        clipboardPanelView.visibility = View.VISIBLE
+    }
+
+    private fun openEmojiPanel() {
+        keyboardView.visibility = View.GONE
+        clipboardPanelView.visibility = View.GONE
+        emojiPanelView.visibility = View.VISIBLE
+    }
+
+    private fun closePanels() {
+        clipboardPanelView.visibility = View.GONE
+        emojiPanelView.visibility = View.GONE
+        keyboardView.visibility = View.VISIBLE
+    }
+
     // --- Буфер обмена ---
 
     private fun onSystemClipboardChanged() {
@@ -203,17 +247,6 @@ class RuEnKeyboardService : InputMethodService(), KeyboardView.OnKeyboardActionL
         if (clip.itemCount == 0) return
         val text = clip.getItemAt(0).coerceToText(this)?.toString() ?: return
         clipboardStore.addEntry(text)
-    }
-
-    private fun openClipboardPanel() {
-        renderClipboardList()
-        keyboardView.visibility = View.GONE
-        clipboardPanelView.visibility = View.VISIBLE
-    }
-
-    private fun closeClipboardPanel() {
-        clipboardPanelView.visibility = View.GONE
-        keyboardView.visibility = View.VISIBLE
     }
 
     private fun renderClipboardList() {
@@ -237,7 +270,7 @@ class RuEnKeyboardService : InputMethodService(), KeyboardView.OnKeyboardActionL
 
             itemView.setOnClickListener {
                 currentInputConnection?.commitText(text, 1)
-                closeClipboardPanel()
+                closePanels()
             }
             deleteView.setOnClickListener {
                 clipboardStore.removeEntry(text)

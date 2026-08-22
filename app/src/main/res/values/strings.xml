@@ -9,4 +9,5 @@
     <string name="clipboard_empty">Буфер обмена пуст</string>
     <string name="clipboard_clear">Очистить</string>
     <string name="clipboard_back">Назад</string>
+    <string name="emoji_coming_soon">Эмодзи скоро появятся здесь</string>
 </resources>

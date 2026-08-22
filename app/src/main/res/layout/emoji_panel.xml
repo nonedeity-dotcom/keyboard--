@@ -15,7 +15,7 @@
         android:background="@color/keyboard_bg">
 
         <TextView
-            android:id="@+id/btn_clip_back"
+            android:id="@+id/btn_emoji_back"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:gravity="center_vertical"
@@ -27,39 +27,21 @@
             android:clickable="true"
             android:focusable="true" />
 
-        <View
-            android:layout_width="0dp"
-            android:layout_height="1dp"
-            android:layout_weight="1" />
-
-        <TextView
-            android:id="@+id/btn_clip_clear"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:gravity="center_vertical"
-            android:text="@string/clipboard_clear"
-            android:textColor="@color/key_text"
-            android:textSize="16sp"
-            android:paddingStart="16dp"
-            android:paddingEnd="8dp"
-            android:clickable="true"
-            android:focusable="true" />
-
     </LinearLayout>
 
-    <ScrollView
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1">
 
-        <LinearLayout
-            android:id="@+id/clip_list_container"
-            android:layout_width="match_parent"
+        <TextView
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingTop="4dp"
-            android:paddingBottom="4dp" />
+            android:layout_gravity="center"
+            android:text="@string/emoji_coming_soon"
+            android:textColor="@color/key_hint"
+            android:textSize="15sp" />
 
-    </ScrollView>
+    </FrameLayout>
 
 </LinearLayout>

@@ -11,4 +11,5 @@
     <color name="panel_bg">#1E1F22</color>
     <color name="clip_item_bg">#3A3B3E</color>
     <color name="divider">#38393C</color>
+    <color name="ic_launcher_background">#1E1F22</color>
 </resources>

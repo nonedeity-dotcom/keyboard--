@@ -49,6 +49,18 @@ class SwipeGestureTest {
         return view.keyboard!!.keys.first { it.codes.isNotEmpty() && it.codes[0] == 32 }
     }
 
+    // Печатаем полный стектрейс перед тем, как дать исключению всплыть —
+    // короткая сводка Gradle по умолчанию ("NPE at file:line") недостаточна,
+    // чтобы понять причину падения.
+    private fun dispatch(view: HintKeyboardView, event: MotionEvent) {
+        try {
+            view.dispatchTouchEvent(event)
+        } catch (t: Throwable) {
+            t.printStackTrace()
+            throw t
+        }
+    }
+
     @Test
     fun horizontalDragOnSpaceKeyTriggersLanguageSwitch() {
         val view = buildLaidOutView()
@@ -62,11 +74,11 @@ class SwipeGestureTest {
 
         val downTime = SystemClock.uptimeMillis()
         val down = MotionEvent.obtain(downTime, downTime, MotionEvent.ACTION_DOWN, downX, y, 0)
-        view.dispatchTouchEvent(down)
+        dispatch(view, down)
         down.recycle()
 
         val move = MotionEvent.obtain(downTime, downTime + 30, MotionEvent.ACTION_MOVE, movedX, y, 0)
-        view.dispatchTouchEvent(move)
+        dispatch(view, move)
         move.recycle()
 
         assertTrue("swipe on the space key must trigger the language switch callback", switchedCount == 1)
@@ -84,16 +96,16 @@ class SwipeGestureTest {
 
         val downTime = SystemClock.uptimeMillis()
         val down = MotionEvent.obtain(downTime, downTime, MotionEvent.ACTION_DOWN, x, y, 0)
-        view.dispatchTouchEvent(down)
+        dispatch(view, down)
         down.recycle()
 
         // Небольшое дрожание пальца, не должно расцениваться как свайп.
         val move = MotionEvent.obtain(downTime, downTime + 10, MotionEvent.ACTION_MOVE, x + 5f, y, 0)
-        view.dispatchTouchEvent(move)
+        dispatch(view, move)
         move.recycle()
 
         val up = MotionEvent.obtain(downTime, downTime + 20, MotionEvent.ACTION_UP, x + 5f, y, 0)
-        view.dispatchTouchEvent(up)
+        dispatch(view, up)
         up.recycle()
 
         assertFalse("a small tap must not trigger the language switch", switched)
@@ -113,11 +125,11 @@ class SwipeGestureTest {
 
         val downTime = SystemClock.uptimeMillis()
         val down = MotionEvent.obtain(downTime, downTime, MotionEvent.ACTION_DOWN, downX, y, 0)
-        view.dispatchTouchEvent(down)
+        dispatch(view, down)
         down.recycle()
 
         val move = MotionEvent.obtain(downTime, downTime + 30, MotionEvent.ACTION_MOVE, movedX, y, 0)
-        view.dispatchTouchEvent(move)
+        dispatch(view, move)
         move.recycle()
 
         assertFalse("a swipe that doesn't start on the space key must not switch language", switched)

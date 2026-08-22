@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.inputmethodservice.Keyboard
 import android.os.Looper
+import android.view.LayoutInflater
 import android.view.ViewGroup
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -58,14 +59,20 @@ class KeyboardScreenshotTest {
 
     private fun renderKeyboard(xmlRes: Int, fileName: String, hints: Map<Int, String> = emptyMap()) {
         val activity = Robolectric.buildActivity(Activity::class.java).setup().get()
-        val view = HintKeyboardView(activity, null)
+
+        // Инфлейтим настоящий keyboard_container.xml (как в RuEnKeyboardService),
+        // а не голый HintKeyboardView(activity, null) — атрибуты вроде
+        // android:keyBackground/keyTextColor/keyTextSize задаются ТОЛЬКО в XML
+        // и применяются лишь при инфлейте с реальным AttributeSet, иначе рендер
+        // тихо откатывается на дефолтный серый стиль KeyboardView.
+        val root = LayoutInflater.from(activity).inflate(R.layout.keyboard_container, null)
+        val view = root.findViewById<HintKeyboardView>(R.id.keyboard_view)
         view.keyboard = Keyboard(activity, xmlRes)
         view.hints = hints
         view.accentCode = codeEnter
-        view.setBackgroundColor(activity.getColor(R.color.keyboard_bg))
 
         activity.addContentView(
-            view,
+            root,
             ViewGroup.LayoutParams(1080, ViewGroup.LayoutParams.WRAP_CONTENT)
         )
         shadowOf(Looper.getMainLooper()).idle()

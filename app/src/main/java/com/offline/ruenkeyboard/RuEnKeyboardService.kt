@@ -96,6 +96,7 @@ class RuEnKeyboardService : InputMethodService(), KeyboardView.OnKeyboardActionL
 
         keyboardView.setOnKeyboardActionListener(this)
         keyboardView.accentCode = CODE_ENTER
+        keyboardView.onSwipeLanguage = { switchLanguage() }
 
         containerView.findViewById<TextView>(R.id.btn_open_clipboard).setOnClickListener {
             openClipboardPanel()
@@ -241,14 +242,6 @@ class RuEnKeyboardService : InputMethodService(), KeyboardView.OnKeyboardActionL
         }
     }
 
-    override fun swipeLeft() {
-        switchLanguage()
-    }
-
-    override fun swipeRight() {
-        switchLanguage()
-    }
-
     private fun performEnter(ic: android.view.inputmethod.InputConnection?) {
         val editorInfo = currentInputEditorInfo
         val action = editorInfo?.imeOptions?.and(EditorInfo.IME_MASK_ACTION) ?: EditorInfo.IME_ACTION_NONE
@@ -328,6 +321,8 @@ class RuEnKeyboardService : InputMethodService(), KeyboardView.OnKeyboardActionL
     override fun onPress(primaryCode: Int) {}
     override fun onRelease(primaryCode: Int) {}
     override fun onText(text: CharSequence?) {}
+    override fun swipeLeft() {}
+    override fun swipeRight() {}
     override fun swipeDown() {}
     override fun swipeUp() {}
 }

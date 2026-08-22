@@ -3,6 +3,7 @@ package com.offline.ruenkeyboard
 import android.inputmethodservice.Keyboard
 import androidx.test.core.app.ApplicationProvider
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -36,7 +37,7 @@ class KeyLabelsTest {
 
     @Test
     fun nullAndNonLetterLabelsSurviveUntouched() {
-        assertEquals(null, labelForShiftState(null, isLetterMode = true, shifted = true))
+        assertNull(labelForShiftState(null, isLetterMode = true, shifted = true))
         assertEquals("1", labelForShiftState("1", isLetterMode = true, shifted = true))
         assertEquals("@", labelForShiftState("@", isLetterMode = true, shifted = true))
     }

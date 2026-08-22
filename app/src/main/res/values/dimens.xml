@@ -4,4 +4,5 @@
     <dimen name="top_bar_height">38dp</dimen>
     <dimen name="panel_height">224dp</dimen>
     <dimen name="clip_item_padding">12dp</dimen>
+    <dimen name="emoji_cell_height">42dp</dimen>
 </resources>

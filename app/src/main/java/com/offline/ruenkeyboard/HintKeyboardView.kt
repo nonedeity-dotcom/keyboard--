@@ -13,7 +13,6 @@ import android.widget.GridLayout
 import android.widget.PopupWindow
 import android.widget.TextView
 import kotlin.math.abs
-import kotlin.math.ceil
 
 /**
  * KeyboardView с цифровыми подсказками в углах клавиш (как у Gboard)
@@ -56,20 +55,19 @@ class HintKeyboardView(context: Context, attrs: AttributeSet?) : KeyboardView(co
     private val hintMarginPx = 8f * density
 
     // Собственный попап долгого нажатия вместо стокового KeyboardView-механизма:
-    // у стокового попапа выбор символа обрывается, если палец уходит за пределы
-    // строго той же строки, и он не подтверждает/закрывается сам при отпускании
-    // (нужен отдельный крестик) — у современных клавиатур (например, Emoji
-    // Keyboard) выбор свободный по всей ширине попапа и подтверждается прямо
-    // при отпускании пальца.
+    // стоковый попап требует попадать пальцем ровно в свою строку и не
+    // подтверждает выбор при отпускании (нужен отдельный крестик), тогда как
+    // референсная клавиатура ведёт выбор по ближайшей ячейке и вставляет
+    // подсвеченный символ ровно в момент, когда палец отрывают от экрана.
     private var actionListener: OnKeyboardActionListener? = null
     private var popupWindow: PopupWindow? = null
     private var popupCells: List<TextView> = emptyList()
     private var popupChars: String = ""
+    private var popupGrid: PopupGrid? = null
     private var popupSelectedIndex: Int = -1
-    private var popupLeftPx = 0f
-    private var popupCellWidthPx = 1f
-    private val popupMaxColumns = 8
-    private val popupCellSizePx = (44f * density).toInt()
+
+    private val popupCellSizePx = 44f * density
+    private val popupGapPx = 6f * density
 
     override fun setOnKeyboardActionListener(listener: OnKeyboardActionListener) {
         actionListener = listener
@@ -83,64 +81,81 @@ class HintKeyboardView(context: Context, attrs: AttributeSet?) : KeyboardView(co
         return true
     }
 
+    /**
+     * Попап живёт в отдельном окне, поэтому его обязательно нужно закрыть,
+     * когда сама клавиатура уходит с экрана: иначе окно остаётся висеть без
+     * валидного токена (IME пересоздаёт свой View при каждом показе).
+     */
+    override fun onDetachedFromWindow() {
+        dismissPopup()
+        super.onDetachedFromWindow()
+    }
+
     private fun showCharacterPopup(key: Keyboard.Key, chars: String) {
         dismissPopup()
+
+        val grid = PopupGrid.forCharacters(
+            chars = chars,
+            keyCenterX = key.x + key.width / 2f,
+            keyTop = key.y.toFloat(),
+            cellSize = popupCellSizePx,
+            gap = popupGapPx,
+            viewWidth = width
+        )
+        popupGrid = grid
         popupChars = chars
 
-        val columns = minOf(chars.length, popupMaxColumns)
-        val rows = ceil(chars.length / columns.toDouble()).toInt()
-        val popupWidth = popupCellSizePx * columns
-        val popupHeight = popupCellSizePx * rows
-
-        val grid = GridLayout(context).apply {
-            columnCount = columns
-            rowCount = rows
-            setBackgroundColor(context.getColor(R.color.key_bg_special))
+        val cellPx = popupCellSizePx.toInt()
+        val gridView = GridLayout(context).apply {
+            columnCount = grid.columns
+            rowCount = grid.rows
+            setBackgroundResource(R.drawable.popup_bg)
         }
-        val cells = mutableListOf<TextView>()
-        for (ch in chars) {
-            val cell = TextView(context).apply {
+        val cells = chars.map { ch ->
+            TextView(context).apply {
                 text = ch.toString()
                 textSize = 20f
                 gravity = Gravity.CENTER
                 setTextColor(context.getColor(R.color.key_text))
-                setBackgroundColor(context.getColor(R.color.key_bg_special))
                 layoutParams = GridLayout.LayoutParams().apply {
-                    width = popupCellSizePx
-                    height = popupCellSizePx
+                    width = cellPx
+                    height = cellPx
                 }
             }
-            cells.add(cell)
-            grid.addView(cell)
         }
+        cells.forEach { gridView.addView(it) }
         popupCells = cells
 
-        popupLeftPx = (key.x + key.width / 2f - popupWidth / 2f)
-            .coerceIn(0f, (width - popupWidth).coerceAtLeast(0).toFloat())
-        popupCellWidthPx = popupWidth / columns.toFloat()
-
         popupSelectedIndex = -1
-        updatePopupSelection(key.x + key.width / 2f)
+        // Палец ещё не двигали — подсвечиваем то, что под ним прямо сейчас.
+        updatePopupSelection(key.x + key.width / 2f, key.y + key.height / 2f)
 
+        // showAtLocation ждёт координаты экрана, а не окна: у IME собственное
+        // окно, и getLocationInWindow дал бы смещение относительно него.
         val location = IntArray(2)
-        getLocationInWindow(location)
-        val popupY = location[1] + key.y - popupHeight - (4f * density).toInt()
+        getLocationOnScreen(location)
 
-        val pw = PopupWindow(grid, popupWidth, popupHeight, false)
-        pw.isTouchable = false
-        pw.showAtLocation(this, Gravity.NO_GRAVITY, (location[0] + popupLeftPx).toInt(), popupY)
-        popupWindow = pw
+        popupWindow = PopupWindow(gridView, grid.width.toInt(), grid.height.toInt(), false).apply {
+            isTouchable = false
+            // Попап рисуется над клавишей, то есть выше окна IME — без этого
+            // система прижала бы его обратно внутрь клавиатуры.
+            isClippingEnabled = false
+            showAtLocation(
+                this@HintKeyboardView,
+                Gravity.NO_GRAVITY,
+                (location[0] + grid.left).toInt(),
+                (location[1] + grid.top).toInt()
+            )
+        }
     }
 
-    private fun updatePopupSelection(touchX: Float) {
-        if (popupChars.isEmpty()) return
-        val index = (((touchX - popupLeftPx) / popupCellWidthPx).toInt())
-            .coerceIn(0, popupChars.length - 1)
-        if (index != popupSelectedIndex) {
-            popupCells.getOrNull(popupSelectedIndex)?.setBackgroundColor(context.getColor(R.color.key_bg_special))
-            popupCells.getOrNull(index)?.setBackgroundColor(context.getColor(R.color.key_bg_accent))
-            popupSelectedIndex = index
-        }
+    private fun updatePopupSelection(touchX: Float, touchY: Float) {
+        val grid = popupGrid ?: return
+        val index = grid.indexAt(touchX, touchY)
+        if (index == popupSelectedIndex) return
+        popupCells.getOrNull(popupSelectedIndex)?.setBackgroundResource(0)
+        popupCells.getOrNull(index)?.setBackgroundResource(R.drawable.popup_cell_selected)
+        popupSelectedIndex = index
     }
 
     private fun commitPopupSelection() {
@@ -156,6 +171,7 @@ class HintKeyboardView(context: Context, attrs: AttributeSet?) : KeyboardView(co
         popupWindow = null
         popupCells = emptyList()
         popupChars = ""
+        popupGrid = null
         popupSelectedIndex = -1
     }
 
@@ -200,8 +216,9 @@ class HintKeyboardView(context: Context, attrs: AttributeSet?) : KeyboardView(co
     override fun onTouchEvent(event: MotionEvent): Boolean {
         if (popupWindow != null) {
             when (event.actionMasked) {
-                MotionEvent.ACTION_MOVE -> updatePopupSelection(event.x)
+                MotionEvent.ACTION_MOVE -> updatePopupSelection(event.x, event.y)
                 MotionEvent.ACTION_UP -> {
+                    updatePopupSelection(event.x, event.y)
                     commitPopupSelection()
                     val cancelEvent = MotionEvent.obtain(event)
                     cancelEvent.action = MotionEvent.ACTION_CANCEL
@@ -211,6 +228,13 @@ class HintKeyboardView(context: Context, attrs: AttributeSet?) : KeyboardView(co
                 MotionEvent.ACTION_CANCEL -> {
                     dismissPopup()
                     super.onTouchEvent(event)
+                }
+                MotionEvent.ACTION_DOWN -> {
+                    // Новое касание при висящем попапе означает, что прошлый
+                    // жест оборвался мимо нас: закрываем попап и отдаём
+                    // событие обычному разбору нажатий.
+                    dismissPopup()
+                    return super.onTouchEvent(event)
                 }
             }
             return true

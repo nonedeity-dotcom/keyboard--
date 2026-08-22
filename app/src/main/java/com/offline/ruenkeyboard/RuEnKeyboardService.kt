@@ -4,10 +4,14 @@ import android.inputmethodservice.InputMethodService
 import android.inputmethodservice.Keyboard
 import android.inputmethodservice.KeyboardView
 import android.content.ClipboardManager
+import android.view.Gravity
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
+import android.widget.BaseAdapter
+import android.widget.GridView
 import android.widget.LinearLayout
 import android.widget.TextView
 
@@ -33,6 +37,9 @@ class RuEnKeyboardService : InputMethodService(), KeyboardView.OnKeyboardActionL
         const val CODE_CURSOR_RIGHT = -19
 
         private const val SHIFT_DOUBLE_TAP_MS = 300L
+        // Запас с большим избытком: даже составные эмодзи-кластеры (флаги,
+        // «семьи» из нескольких фигур через ZWJ) укладываются в него целиком.
+        private const val GRAPHEME_LOOKBEHIND = 32
         // Реальное значение из референс-клавиатуры (config_longpress_shift_lock_timeout).
         private const val SHIFT_LONG_PRESS_MS = 800L
 
@@ -59,6 +66,8 @@ class RuEnKeyboardService : InputMethodService(), KeyboardView.OnKeyboardActionL
     private lateinit var clipboardPanelView: View
     private lateinit var clipListContainer: LinearLayout
     private lateinit var emojiPanelView: View
+    private var emojiAdapter: EmojiAdapter? = null
+    private var emojiTabs: List<TextView> = emptyList()
 
     private lateinit var enKeyboard: Keyboard
     private lateinit var ruKeyboard: Keyboard
@@ -123,6 +132,10 @@ class RuEnKeyboardService : InputMethodService(), KeyboardView.OnKeyboardActionL
         emojiPanelView.findViewById<TextView>(R.id.btn_emoji_back).setOnClickListener {
             closePanels()
         }
+        emojiPanelView.findViewById<TextView>(R.id.btn_emoji_delete).setOnClickListener {
+            currentInputConnection?.let { deleteOneCharacterBeforeCursor(it) }
+        }
+        setUpEmojiPanel()
 
         applyKeyboard()
         return containerView
@@ -211,8 +224,8 @@ class RuEnKeyboardService : InputMethodService(), KeyboardView.OnKeyboardActionL
                 val selected = ic?.getSelectedText(0)
                 if (!selected.isNullOrEmpty()) {
                     ic.commitText("", 1)
-                } else {
-                    ic?.deleteSurroundingText(1, 0)
+                } else if (ic != null) {
+                    deleteOneCharacterBeforeCursor(ic)
                 }
             }
             CODE_TO_SYMBOLS -> {
@@ -256,6 +269,23 @@ class RuEnKeyboardService : InputMethodService(), KeyboardView.OnKeyboardActionL
         }
     }
 
+    /**
+     * Удаляет ровно один видимый символ перед курсором — целым графемным
+     * кластером, а не одной UTF-16 единицей (см. unitsToDeleteAtEndOf).
+     */
+    private fun deleteOneCharacterBeforeCursor(ic: android.view.inputmethod.InputConnection) {
+        val before = ic.getTextBeforeCursor(GRAPHEME_LOOKBEHIND, 0)
+        if (before.isNullOrEmpty()) {
+            // Поле может не отдавать свой текст (например, поле пароля) —
+            // тогда честнее отправить обычный KEYCODE_DEL и дать ему удалить
+            // символ самостоятельно, чем молча ничего не сделать.
+            ic.sendKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DEL))
+            ic.sendKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_DEL))
+            return
+        }
+        ic.deleteSurroundingText(unitsToDeleteAtEndOf(before.toString()), 0)
+    }
+
     private fun performEnter(ic: android.view.inputmethod.InputConnection?) {
         val editorInfo = currentInputEditorInfo
         val action = editorInfo?.imeOptions?.and(EditorInfo.IME_MASK_ACTION) ?: EditorInfo.IME_ACTION_NONE
@@ -275,6 +305,85 @@ class RuEnKeyboardService : InputMethodService(), KeyboardView.OnKeyboardActionL
         keyboardView.visibility = View.GONE
         emojiPanelView.visibility = View.GONE
         clipboardPanelView.visibility = View.VISIBLE
+    }
+
+    // --- Панель эмодзи ---
+
+    /**
+     * Список эмодзи зашит в приложение (EmojiData) — клавиатура офлайновая
+     * и ничего не догружает. GridView со своим адаптером, а не готовый
+     * список из библиотеки: переиспользование ячеек тут даёт плавную
+     * прокрутку без лишних зависимостей.
+     */
+    private fun setUpEmojiPanel() {
+        val grid = emojiPanelView.findViewById<GridView>(R.id.emoji_grid)
+        val tabsContainer = emojiPanelView.findViewById<LinearLayout>(R.id.emoji_tabs)
+
+        val adapter = EmojiAdapter()
+        emojiAdapter = adapter
+        grid.adapter = adapter
+        grid.setOnItemClickListener { _, _, position, _ ->
+            adapter.emoji.getOrNull(position)?.let { currentInputConnection?.commitText(it, 1) }
+        }
+
+        val tabPaddingPx = (14f * resources.displayMetrics.density).toInt()
+        val tabs = EmojiData.categories.mapIndexed { index, category ->
+            TextView(this).apply {
+                text = category.tab
+                textSize = 17f
+                gravity = Gravity.CENTER
+                setPadding(tabPaddingPx, 0, tabPaddingPx, 0)
+                isClickable = true
+                isFocusable = true
+                setOnClickListener { selectEmojiCategory(index) }
+                tabsContainer.addView(
+                    this,
+                    LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT
+                    )
+                )
+            }
+        }
+        emojiTabs = tabs
+
+        selectEmojiCategory(0)
+    }
+
+    private fun selectEmojiCategory(index: Int) {
+        val category = EmojiData.categories.getOrNull(index) ?: return
+        emojiAdapter?.emoji = category.emoji
+        emojiPanelView.findViewById<GridView>(R.id.emoji_grid).setSelection(0)
+        emojiTabs.forEachIndexed { i, tab ->
+            tab.setBackgroundResource(if (i == index) R.drawable.emoji_tab_selected else 0)
+        }
+    }
+
+    private inner class EmojiAdapter : BaseAdapter() {
+
+        var emoji: List<String> = emptyList()
+            set(value) {
+                field = value
+                notifyDataSetChanged()
+            }
+
+        private val cellHeightPx =
+            resources.getDimensionPixelSize(R.dimen.emoji_cell_height)
+
+        override fun getCount(): Int = emoji.size
+        override fun getItem(position: Int): Any = emoji[position]
+        override fun getItemId(position: Int): Long = position.toLong()
+
+        override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+            val cell = convertView as? TextView ?: TextView(this@RuEnKeyboardService).apply {
+                gravity = Gravity.CENTER
+                textSize = 22f
+                height = cellHeightPx
+                setBackgroundResource(R.drawable.emoji_cell_bg)
+            }
+            cell.text = emoji[position]
+            return cell
+        }
     }
 
     private fun openEmojiPanel() {

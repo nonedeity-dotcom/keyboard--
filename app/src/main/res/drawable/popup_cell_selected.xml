@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Подсветка выбранной ячейки. Небольшой inset нужен, чтобы синий
+    прямоугольник не вылезал за скруглённые углы самой панели попапа.
+-->
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:inset="2dp">
+
+    <shape android:shape="rectangle">
+        <solid android:color="@color/key_bg_accent" />
+        <corners android:radius="8dp" />
+    </shape>
+
+</inset>

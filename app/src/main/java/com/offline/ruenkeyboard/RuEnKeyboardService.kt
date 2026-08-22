@@ -33,6 +33,7 @@ class RuEnKeyboardService : InputMethodService(), KeyboardView.OnKeyboardActionL
         const val CODE_CURSOR_RIGHT = -19
 
         private const val SHIFT_DOUBLE_TAP_MS = 300L
+        private const val SHIFT_LONG_PRESS_MS = 400L
 
         private val DIGIT_HINTS_EN = mapOf(
             113 to "1", 119 to "2", 101 to "3", 114 to "4", 116 to "5",
@@ -67,6 +68,7 @@ class RuEnKeyboardService : InputMethodService(), KeyboardView.OnKeyboardActionL
     private var mode = Mode.LETTERS
     private var shiftState = ShiftState.NONE
     private var lastShiftTapTime = 0L
+    private var shiftPressTime = 0L
 
     private lateinit var clipboardStore: ClipboardHistoryStore
     private lateinit var systemClipboard: ClipboardManager
@@ -194,7 +196,9 @@ class RuEnKeyboardService : InputMethodService(), KeyboardView.OnKeyboardActionL
         when (primaryCode) {
             CODE_SHIFT -> {
                 val now = System.currentTimeMillis()
+                val heldMs = now - shiftPressTime
                 shiftState = when {
+                    heldMs >= SHIFT_LONG_PRESS_MS -> ShiftState.CAPS
                     now - lastShiftTapTime < SHIFT_DOUBLE_TAP_MS -> ShiftState.CAPS
                     shiftState == ShiftState.NONE -> ShiftState.ONCE
                     else -> ShiftState.NONE
@@ -327,7 +331,9 @@ class RuEnKeyboardService : InputMethodService(), KeyboardView.OnKeyboardActionL
 
     // --- Обязательные методы интерфейса (не используются) ---
 
-    override fun onPress(primaryCode: Int) {}
+    override fun onPress(primaryCode: Int) {
+        if (primaryCode == CODE_SHIFT) shiftPressTime = System.currentTimeMillis()
+    }
     override fun onRelease(primaryCode: Int) {}
     override fun onText(text: CharSequence?) {}
     override fun swipeLeft() {}

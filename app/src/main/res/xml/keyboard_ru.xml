@@ -43,7 +43,7 @@
         <Key android:codes="1100" android:keyLabel="ь" android:popupKeyboard="@xml/keyboard_popup_template" android:popupCharacters="ъ" />
         <Key android:codes="1073" android:keyLabel="б" android:popupKeyboard="@xml/keyboard_popup_template" android:popupCharacters="?" />
         <Key android:codes="1102" android:keyLabel="ю" android:popupKeyboard="@xml/keyboard_popup_template" android:popupCharacters="%" />
-        <Key android:codes="-11" android:keyWidth="12%p" android:keyLabel="⌫" />
+        <Key android:codes="-11" android:keyWidth="12%p" android:keyLabel="⌫" android:isRepeatable="true" />
     </Row>
 
     <Row android:rowEdgeFlags="bottom">

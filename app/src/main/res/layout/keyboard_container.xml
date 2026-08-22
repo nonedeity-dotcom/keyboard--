@@ -38,7 +38,7 @@
             android:background="@color/keyboard_bg"
             android:keyBackground="@drawable/key_bg_selector"
             android:keyTextColor="@color/key_text"
-            android:keyTextSize="20sp"
+            android:keyTextSize="28sp"
             android:visibility="visible" />
 
         <include

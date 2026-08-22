@@ -31,7 +31,7 @@ class HintKeyboardView(context: Context, attrs: AttributeSet?) : KeyboardView(co
 
     private val hintPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = context.getColor(R.color.key_hint)
-        textSize = 11f * density
+        textSize = 12f * density
         textAlign = Paint.Align.RIGHT
     }
 
@@ -41,12 +41,12 @@ class HintKeyboardView(context: Context, attrs: AttributeSet?) : KeyboardView(co
 
     private val accentLabelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = context.getColor(R.color.key_text)
-        textSize = 20f * density
+        textSize = 26f * density
         textAlign = Paint.Align.CENTER
     }
 
     private val gapPx = 1.5f * density
-    private val cornerRadiusPx = 8f * density
+    private val cornerRadiusPx = 10f * density
     private val hintMarginPx = 8f * density
 
     override fun onDraw(canvas: Canvas) {

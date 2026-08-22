@@ -35,10 +35,29 @@ class KeyboardScreenshotTest {
 
     private val outDir = File("build/screenshots").apply { mkdirs() }
 
-    private fun renderKeyboard(xmlRes: Int, fileName: String) {
+    // Те же таблицы подсказок и accent-код, что RuEnKeyboardService реально
+    // применяет к keyboardView — чтобы рендер в тесте показывал то же самое,
+    // что показала бы настоящая клавиатура, а не голый KeyboardView без хинтов.
+    private val digitHintsEn = mapOf(
+        113 to "1", 119 to "2", 101 to "3", 114 to "4", 116 to "5",
+        121 to "6", 117 to "7", 105 to "8", 111 to "9", 112 to "0"
+    )
+    private val ruHints = mapOf(
+        1081 to "1", 1094 to "2", 1091 to "3", 1082 to "4", 1077 to "5",
+        1085 to "6", 1075 to "7", 1096 to "8", 1097 to "9", 1079 to "0",
+        1092 to "@", 1099 to "#", 1074 to "₽", 1072 to "_", 1087 to "&",
+        1088 to "-", 1086 to "+", 1083 to "(", 1076 to ")", 1078 to "№", 1101 to "~",
+        1103 to "*", 1095 to "\"", 1089 to "'", 1084 to ":", 1080 to ";",
+        1090 to "!", 1100 to "ъ", 1073 to "?", 1102 to "%"
+    )
+    private val codeEnter = -15
+
+    private fun renderKeyboard(xmlRes: Int, fileName: String, hints: Map<Int, String> = emptyMap()) {
         val activity = Robolectric.buildActivity(Activity::class.java).setup().get()
         val view = HintKeyboardView(activity, null)
         view.keyboard = Keyboard(activity, xmlRes)
+        view.hints = hints
+        view.accentCode = codeEnter
         view.setBackgroundColor(activity.getColor(R.color.keyboard_bg))
 
         activity.addContentView(
@@ -90,8 +109,8 @@ class KeyboardScreenshotTest {
     @Test
     fun renderAllKeyboardLayouts() {
         try {
-            renderKeyboard(R.xml.keyboard_ru, "keyboard_ru.png")
-            renderKeyboard(R.xml.keyboard_en, "keyboard_en.png")
+            renderKeyboard(R.xml.keyboard_ru, "keyboard_ru.png", ruHints)
+            renderKeyboard(R.xml.keyboard_en, "keyboard_en.png", digitHintsEn)
             renderKeyboard(R.xml.keyboard_symbols, "keyboard_symbols.png")
             renderKeyboard(R.xml.keyboard_symbols2, "keyboard_symbols2.png")
         } catch (t: Throwable) {

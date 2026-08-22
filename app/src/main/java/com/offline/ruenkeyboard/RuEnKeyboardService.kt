@@ -18,7 +18,7 @@ import android.widget.TextView
 class RuEnKeyboardService : InputMethodService(), KeyboardView.OnKeyboardActionListener {
 
     private enum class Lang { EN, RU }
-    private enum class Mode { LETTERS, SYMBOLS }
+    private enum class Mode { LETTERS, SYMBOLS, SYMBOLS2 }
     private enum class ShiftState { NONE, ONCE, CAPS }
 
     companion object {
@@ -26,9 +26,11 @@ class RuEnKeyboardService : InputMethodService(), KeyboardView.OnKeyboardActionL
         const val CODE_DELETE = -11
         const val CODE_TO_SYMBOLS = -12
         const val CODE_TO_LETTERS = -13
-        const val CODE_LANG_SWITCH = -14
         const val CODE_ENTER = -15
         const val CODE_EMOJI = -16
+        const val CODE_TO_SYMBOLS2 = -17
+        const val CODE_CURSOR_LEFT = -18
+        const val CODE_CURSOR_RIGHT = -19
 
         private const val SHIFT_DOUBLE_TAP_MS = 300L
 
@@ -36,9 +38,13 @@ class RuEnKeyboardService : InputMethodService(), KeyboardView.OnKeyboardActionL
             113 to "1", 119 to "2", 101 to "3", 114 to "4", 116 to "5",
             121 to "6", 117 to "7", 105 to "8", 111 to "9", 112 to "0"
         )
-        private val DIGIT_HINTS_RU = mapOf(
+        private val RU_HINTS = mapOf(
             1081 to "1", 1094 to "2", 1091 to "3", 1082 to "4", 1077 to "5",
-            1085 to "6", 1075 to "7", 1096 to "8", 1097 to "9", 1079 to "0"
+            1085 to "6", 1075 to "7", 1096 to "8", 1097 to "9", 1079 to "0",
+            1092 to "@", 1099 to "#", 1074 to "₽", 1072 to "_", 1087 to "&",
+            1088 to "-", 1086 to "+", 1083 to "(", 1076 to ")", 1078 to "№", 1101 to "~",
+            1103 to "*", 1095 to "\"", 1089 to "'", 1084 to ":", 1080 to ";",
+            1090 to "!", 1100 to "ъ", 1073 to "?", 1102 to "%"
         )
     }
 
@@ -51,6 +57,7 @@ class RuEnKeyboardService : InputMethodService(), KeyboardView.OnKeyboardActionL
     private lateinit var enKeyboard: Keyboard
     private lateinit var ruKeyboard: Keyboard
     private lateinit var symbolsKeyboard: Keyboard
+    private lateinit var symbols2Keyboard: Keyboard
 
     private var lang = Lang.EN
     private var mode = Mode.LETTERS
@@ -85,6 +92,7 @@ class RuEnKeyboardService : InputMethodService(), KeyboardView.OnKeyboardActionL
         enKeyboard = Keyboard(this, R.xml.keyboard_en)
         ruKeyboard = Keyboard(this, R.xml.keyboard_ru)
         symbolsKeyboard = Keyboard(this, R.xml.keyboard_symbols)
+        symbols2Keyboard = Keyboard(this, R.xml.keyboard_symbols2)
 
         keyboardView.setOnKeyboardActionListener(this)
         keyboardView.accentCode = CODE_ENTER
@@ -120,12 +128,13 @@ class RuEnKeyboardService : InputMethodService(), KeyboardView.OnKeyboardActionL
     private fun applyKeyboard() {
         val keyboard = when (mode) {
             Mode.SYMBOLS -> symbolsKeyboard
+            Mode.SYMBOLS2 -> symbols2Keyboard
             Mode.LETTERS -> if (lang == Lang.RU) ruKeyboard else enKeyboard
         }
         keyboardView.keyboard = keyboard
         keyboardView.hints = when {
             mode == Mode.LETTERS && lang == Lang.EN -> DIGIT_HINTS_EN
-            mode == Mode.LETTERS && lang == Lang.RU -> DIGIT_HINTS_RU
+            mode == Mode.LETTERS && lang == Lang.RU -> RU_HINTS
             else -> emptyMap()
         }
         applyLangLabel()
@@ -134,13 +143,18 @@ class RuEnKeyboardService : InputMethodService(), KeyboardView.OnKeyboardActionL
 
     private fun applyLangLabel() {
         val keyboard = keyboardView.keyboard ?: return
-        if (mode != Mode.LETTERS) return
         val label = if (lang == Lang.RU) "Русский" else "English"
         for (key in keyboard.keys) {
             if (key.codes.isNotEmpty() && key.codes[0] == 32) {
                 key.label = label
             }
         }
+    }
+
+    private fun switchLanguage() {
+        if (mode != Mode.LETTERS) return
+        lang = if (lang == Lang.RU) Lang.EN else Lang.RU
+        applyKeyboard()
     }
 
     private fun applyShiftVisuals() {
@@ -190,17 +204,25 @@ class RuEnKeyboardService : InputMethodService(), KeyboardView.OnKeyboardActionL
                 mode = Mode.SYMBOLS
                 applyKeyboard()
             }
+            CODE_TO_SYMBOLS2 -> {
+                mode = Mode.SYMBOLS2
+                applyKeyboard()
+            }
             CODE_TO_LETTERS -> {
                 mode = Mode.LETTERS
                 shiftState = ShiftState.NONE
                 applyKeyboard()
             }
-            CODE_LANG_SWITCH -> {
-                lang = if (lang == Lang.RU) Lang.EN else Lang.RU
-                applyKeyboard()
-            }
             CODE_ENTER -> performEnter(ic)
             CODE_EMOJI -> openEmojiPanel()
+            CODE_CURSOR_LEFT -> {
+                ic?.sendKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_LEFT))
+                ic?.sendKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_DPAD_LEFT))
+            }
+            CODE_CURSOR_RIGHT -> {
+                ic?.sendKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_RIGHT))
+                ic?.sendKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_DPAD_RIGHT))
+            }
             else -> {
                 if (primaryCode > 0) {
                     val codeToCommit = if (shiftState != ShiftState.NONE && Character.isLetter(primaryCode)) {
@@ -217,6 +239,14 @@ class RuEnKeyboardService : InputMethodService(), KeyboardView.OnKeyboardActionL
                 }
             }
         }
+    }
+
+    override fun swipeLeft() {
+        switchLanguage()
+    }
+
+    override fun swipeRight() {
+        switchLanguage()
     }
 
     private fun performEnter(ic: android.view.inputmethod.InputConnection?) {
@@ -298,8 +328,6 @@ class RuEnKeyboardService : InputMethodService(), KeyboardView.OnKeyboardActionL
     override fun onPress(primaryCode: Int) {}
     override fun onRelease(primaryCode: Int) {}
     override fun onText(text: CharSequence?) {}
-    override fun swipeLeft() {}
-    override fun swipeRight() {}
     override fun swipeDown() {}
     override fun swipeUp() {}
 }

@@ -15,13 +15,13 @@
             android:id="@+id/btn_open_clipboard"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:layout_gravity="center"
+            android:layout_gravity="center_vertical|end"
             android:gravity="center"
             android:text="🗐"
             android:textSize="20sp"
             android:textColor="@color/key_icon"
-            android:paddingStart="24dp"
-            android:paddingEnd="24dp"
+            android:paddingStart="16dp"
+            android:paddingEnd="20dp"
             android:clickable="true"
             android:focusable="true" />
 

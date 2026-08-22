@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="keyboard_bg">#F1F3F4</color>
+    <color name="key_bg">#FFFFFF</color>
+    <color name="key_bg_special">#D5D9DC</color>
+    <color name="key_text">#1F1F1F</color>
+    <color name="panel_bg">#FFFFFF</color>
+    <color name="clip_item_bg">#F1F3F4</color>
+    <color name="divider">#DADCE0</color>
+</resources>

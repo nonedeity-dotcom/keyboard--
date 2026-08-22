@@ -23,6 +23,19 @@ class SwipeGestureTest {
     private fun buildLaidOutView(): HintKeyboardView {
         val context = ApplicationProvider.getApplicationContext<android.content.Context>()
         val view = HintKeyboardView(context, null)
+        // The real KeyboardView base class touches the action listener from
+        // its own onTouchEvent(); without one set it NPEs on the very first
+        // dispatched event, which is what happened when this was missing.
+        view.setOnKeyboardActionListener(object : android.inputmethodservice.KeyboardView.OnKeyboardActionListener {
+            override fun onPress(primaryCode: Int) {}
+            override fun onRelease(primaryCode: Int) {}
+            override fun onKey(primaryCode: Int, keyCodes: IntArray?) {}
+            override fun onText(text: CharSequence?) {}
+            override fun swipeLeft() {}
+            override fun swipeRight() {}
+            override fun swipeDown() {}
+            override fun swipeUp() {}
+        })
         view.keyboard = Keyboard(context, R.xml.keyboard_ru)
 
         val widthSpec = View.MeasureSpec.makeMeasureSpec(1080, View.MeasureSpec.EXACTLY)

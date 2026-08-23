@@ -94,10 +94,12 @@ class HintKeyboardView(context: Context, attrs: AttributeSet?) : KeyboardView(co
     private fun showCharacterPopup(key: Keyboard.Key, chars: String) {
         dismissPopup()
 
+        // Координаты клавиши идут от области контента, поэтому добавляем
+        // паддинги View — ровно так же, как это делает сам KeyboardView.
         val grid = PopupGrid.forCharacters(
             chars = chars,
-            keyCenterX = key.x + key.width / 2f,
-            keyTop = key.y.toFloat(),
+            keyCenterX = key.x + paddingLeft + key.width / 2f,
+            keyTop = (key.y + paddingTop).toFloat(),
             cellSize = popupCellSizePx,
             gap = popupGapPx,
             viewWidth = width
@@ -128,26 +130,41 @@ class HintKeyboardView(context: Context, attrs: AttributeSet?) : KeyboardView(co
 
         popupSelectedIndex = -1
         // Палец ещё не двигали — подсвечиваем то, что под ним прямо сейчас.
-        updatePopupSelection(key.x + key.width / 2f, key.y + key.height / 2f)
+        updatePopupSelection(
+            key.x + paddingLeft + key.width / 2f,
+            key.y + paddingTop + key.height / 2f
+        )
 
-        // showAtLocation ждёт координаты экрана, а не окна: у IME собственное
-        // окно, и getLocationInWindow дал бы смещение относительно него.
+        // ВАЖНО: именно getLocationInWindow, а не getLocationOnScreen.
+        // PopupWindow добавляется как дочернее окно (TYPE_APPLICATION_PANEL) с
+        // токеном родителя, и его x/y отсчитываются от РОДИТЕЛЬСКОГО окна.
+        // Экранные координаты сдвигают попап вниз на высоту всего, что выше
+        // окна клавиатуры, — то есть просто за пределы экрана, и долгое
+        // нажатие выглядит как «ничего не происходит». Сам KeyboardView в
+        // AOSP по этой же причине берёт getLocationInWindow.
         val location = IntArray(2)
-        getLocationOnScreen(location)
+        getLocationInWindow(location)
+        val offsetX = (location[0] + grid.left).toInt()
+        val offsetY = (location[1] + grid.top).toInt()
+        popupOffsetInWindow = offsetX to offsetY
 
         popupWindow = PopupWindow(gridView, grid.width.toInt(), grid.height.toInt(), false).apply {
             isTouchable = false
             // Попап рисуется над клавишей, то есть выше окна IME — без этого
             // система прижала бы его обратно внутрь клавиатуры.
             isClippingEnabled = false
-            showAtLocation(
-                this@HintKeyboardView,
-                Gravity.NO_GRAVITY,
-                (location[0] + grid.left).toInt(),
-                (location[1] + grid.top).toInt()
-            )
+            showAtLocation(this@HintKeyboardView, Gravity.NO_GRAVITY, offsetX, offsetY)
         }
     }
+
+    // --- Точки наблюдения для тестов ---
+
+    internal val isAlternatesPopupShowing: Boolean get() = popupWindow != null
+    internal val alternatesGrid: PopupGrid? get() = popupGrid
+    internal val highlightedAlternate: Char?
+        get() = popupChars.getOrNull(popupSelectedIndex)
+    internal var popupOffsetInWindow: Pair<Int, Int>? = null
+        private set
 
     private fun updatePopupSelection(touchX: Float, touchY: Float) {
         val grid = popupGrid ?: return

@@ -101,6 +101,33 @@ class PopupGridTest {
         assertEquals("expected the hint character '${chars[0]}'", 0, index)
     }
 
+    /**
+     * На узком экране 8 ячеек по 44dp (352dp) просто не помещаются — попап
+     * обязан сузиться до влезающего числа колонок и перенести остаток вниз,
+     * а не вылезти за край экрана.
+     */
+    @Test
+    fun onANarrowKeyboardThePopupWrapsInsteadOfOverflowing() {
+        val narrowWidth = 240
+        val grid = PopupGrid.forCharacters(commaChars, 120f, 400f, cell, 4f, narrowWidth)
+        assertTrue("expected fewer columns than the 8-column maximum", grid.columns < 8)
+        assertTrue("popup must fit: ${grid.width} > $narrowWidth", grid.width <= narrowWidth)
+        assertTrue("the overflow must move onto more rows", grid.rows > 2)
+
+        // И при этом ни один символ не должен стать недостижимым.
+        val reached = mutableSetOf<Int>()
+        var y = grid.top
+        while (y < grid.top + grid.height) {
+            var x = grid.left
+            while (x < grid.left + grid.width) {
+                reached.add(grid.indexAt(x, y))
+                x += cell / 4f
+            }
+            y += cell / 4f
+        }
+        assertEquals(commaChars.length, reached.size)
+    }
+
     @Test
     fun popupNeverExtendsPastTheRightEdgeOfTheKeyboard(  ) {
         val viewWidth = 1080

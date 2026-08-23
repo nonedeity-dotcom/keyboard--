@@ -54,7 +54,12 @@ internal class PopupGrid(
             gap: Float,
             viewWidth: Int
         ): PopupGrid {
-            val columns = minOf(chars.length, MAX_COLUMNS)
+            // Колонок не больше, чем реально влезает в ширину клавиатуры:
+            // 8 ячеек по 44dp — это 352dp, что шире узкого телефона, и попап
+            // вылезал бы за правый край экрана. Лишние символы переносятся
+            // на следующий ряд, размер ячейки при этом не трогаем.
+            val columnsThatFit = floor(viewWidth / cellSize).toInt().coerceAtLeast(1)
+            val columns = minOf(chars.length, MAX_COLUMNS, columnsThatFit)
             val rows = ceil(chars.length / columns.toDouble()).toInt()
             val popupWidth = columns * cellSize
 

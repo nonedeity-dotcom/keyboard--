@@ -118,20 +118,24 @@ class LongPressPopupTest {
      * выбирался только по координате X.
      */
     @Test
-    fun theBottomRowOfTheCommaPopupCanActuallyBeSelected() {
+    fun theSecondRowOfTheCommaPopupCanActuallyBeSelected() {
         val view = buildView()
         val key = keyWithCode(view, 44)
+        val chars = key.popupCharacters.toString()
         openPopupOn(view, key)
         val grid = view.alternatesGrid!!
-        assertEquals("the comma popup is expected to wrap onto two rows", 2, grid.rows)
+        assertTrue("the comma popup is expected to wrap onto more than one row", grid.rows >= 2)
 
+        // Ожидаемый символ выводим из самой сетки, а не зашиваем: количество
+        // колонок зависит от ширины экрана.
+        val expected = chars[grid.columns]
         val x = grid.left + grid.cellSize / 2f
-        val y = grid.top + grid.cellSize * 1.5f // середина нижнего ряда
+        val y = grid.top + grid.cellSize * 1.5f // середина второго ряда
         touch(view, MotionEvent.ACTION_MOVE, x, y)
-        assertEquals(';', view.highlightedAlternate)
+        assertEquals(expected, view.highlightedAlternate)
         touch(view, MotionEvent.ACTION_UP, x, y)
 
-        assertEquals(listOf(';'.code), committed)
+        assertEquals(listOf(expected.code), committed)
     }
 
     /** Палец остаётся на клавише, ниже попапа — выбор не должен теряться. */
@@ -139,12 +143,14 @@ class LongPressPopupTest {
     fun keepingTheFingerOnTheKeyStillTracksASelection() {
         val view = buildView()
         val key = keyWithCode(view, 44)
+        val chars = key.popupCharacters.toString()
         openPopupOn(view, key)
         val grid = view.alternatesGrid!!
 
         val onTheKeyY = grid.top + grid.height + 40f
         touch(view, MotionEvent.ACTION_MOVE, grid.left + grid.cellSize / 2f, onTheKeyY)
-        assertEquals("finger below the popup selects the bottom row", ';', view.highlightedAlternate)
+        val expected = chars[(grid.rows - 1) * grid.columns]
+        assertEquals("finger below the popup selects the bottom row", expected, view.highlightedAlternate)
     }
 
     @Test

@@ -28,7 +28,10 @@ import java.util.Base64
  * чтобы визуально подтвердить, что кнопка буфера обмена реально справа.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [33])
+// Плотность зафиксирована: 1080px рендера = ровно 360dp, как на
+// телефоне с референсного фото, поэтому рендеры можно сравнивать
+// с ним напрямую, а не «на глаз».
+@Config(sdk = [33], qualifiers = "w360dp-h740dp-xxhdpi")
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 class ContainerScreenshotTest {
 

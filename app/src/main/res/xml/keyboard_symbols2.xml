@@ -40,7 +40,7 @@
         <Key android:codes="8240" android:keyLabel="‰" />
         <Key android:codes="91" android:keyLabel="[" />
         <Key android:codes="93" android:keyLabel="]" />
-        <Key android:codes="-11" android:keyWidth="16%p" android:keyLabel="⌫" android:isRepeatable="true" />
+        <Key android:codes="-11" android:keyWidth="16%p" android:keyIcon="@drawable/ic_backspace" android:isRepeatable="true" />
     </Row>
 
     <Row android:rowEdgeFlags="bottom">
@@ -48,7 +48,7 @@
         <Key android:codes="-18" android:keyWidth="10%p" android:keyLabel="&lt;" />
         <Key android:codes="32" android:keyWidth="42%p" android:keyLabel="" android:isRepeatable="false" />
         <Key android:codes="-19" android:keyWidth="10%p" android:keyLabel="&gt;" />
-        <Key android:codes="-15" android:keyWidth="19%p" android:keyLabel="⏎" />
+        <Key android:codes="-15" android:keyWidth="19%p" android:keyIcon="@drawable/ic_enter" />
     </Row>
 
 </Keyboard>

@@ -12,6 +12,7 @@ import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.widget.BaseAdapter
 import android.widget.GridView
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 
@@ -119,7 +120,7 @@ class RuEnKeyboardService : InputMethodService(), KeyboardView.OnKeyboardActionL
         // используют, ограничиваясь подсветкой клавиши.
         keyboardView.isPreviewEnabled = false
 
-        containerView.findViewById<TextView>(R.id.btn_open_clipboard).setOnClickListener {
+        containerView.findViewById<ImageView>(R.id.btn_open_clipboard).setOnClickListener {
             openClipboardPanel()
         }
         clipboardPanelView.findViewById<TextView>(R.id.btn_clip_back).setOnClickListener {
@@ -187,7 +188,12 @@ class RuEnKeyboardService : InputMethodService(), KeyboardView.OnKeyboardActionL
         val keyboard = keyboardView.keyboard ?: return
         for (key in keyboard.keys) {
             if (key.codes.isNotEmpty() && key.codes[0] == CODE_SHIFT) {
-                key.label = if (shiftState == ShiftState.CAPS) "⇪" else "⇧"
+                // Меняем иконку, а не подпись: KeyboardView рисует иконку
+                // только когда label == null, иначе она была бы перекрыта.
+                key.icon = getDrawable(
+                    if (shiftState == ShiftState.CAPS) R.drawable.ic_shift_lock
+                    else R.drawable.ic_shift
+                )
             } else {
                 key.label = labelForShiftState(
                     label = key.label,

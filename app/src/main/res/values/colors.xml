@@ -4,7 +4,7 @@
     <color name="top_bar_bg">#0F0F0F</color>
     <color name="key_bg">#263238</color>
     <color name="key_bg_special">#37474F</color>
-    <color name="key_bg_accent">#4C8DF6</color>
+    <color name="key_bg_accent">#2F6FE4</color>
     <color name="key_text">#DFDFDF</color>
     <color name="key_hint">#7F7F7F</color>
     <color name="key_icon">#C9CACD</color>

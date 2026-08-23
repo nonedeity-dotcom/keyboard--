@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Caps Lock: та же стрелка, но акцентным цветом и с подчёркиванием —
+     состояние видно не только по цвету (WCAG: не полагаться на цвет). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp"
+    android:viewportWidth="24" android:viewportHeight="24">
+    <path android:fillColor="@color/key_bg_accent"
+        android:pathData="M12,3.5 L3.5,12.2 H8.2 V17.5 H15.8 V12.2 H20.5 Z" />
+    <path android:fillColor="@color/key_bg_accent"
+        android:pathData="M8.2,19.2 H15.8 V21.2 H8.2 Z" />
+</vector>

@@ -9,4 +9,5 @@
     <string name="clipboard_empty">Буфер обмена пуст</string>
     <string name="clipboard_clear">Очистить</string>
     <string name="clipboard_back">Назад</string>
+    <string name="clipboard_open">Открыть буфер обмена</string>
 </resources>

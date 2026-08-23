@@ -208,6 +208,17 @@ class HintKeyboardView(context: Context, attrs: AttributeSet?) : KeyboardView(co
                     (key.y + key.height - gapPx)
                 )
                 canvas.drawRoundRect(rect, cornerRadiusPx, cornerRadiusPx, accentPaint)
+
+                // Акцентный прямоугольник закрашивает то, что уже нарисовал
+                // KeyboardView, поэтому содержимое клавиши рисуем поверх сами.
+                val icon = key.icon
+                if (icon != null) {
+                    val left = (rect.centerX() - icon.intrinsicWidth / 2f).toInt()
+                    val top = (rect.centerY() - icon.intrinsicHeight / 2f).toInt()
+                    icon.setBounds(left, top, left + icon.intrinsicWidth, top + icon.intrinsicHeight)
+                    icon.draw(canvas)
+                    continue
+                }
                 val label = key.label ?: continue
                 val textY = rect.centerY() - (accentLabelPaint.descent() + accentLabelPaint.ascent()) / 2f
                 canvas.drawText(label.toString(), rect.centerX(), textY, accentLabelPaint)

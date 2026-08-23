@@ -11,17 +11,21 @@
         android:layout_height="@dimen/top_bar_height"
         android:background="@color/top_bar_bg">
 
-        <TextView
+        <!--
+            Векторная иконка вместо текстового глифа «🗐»: глиф рисуется
+            шрифтом прошивки, поэтому на разных устройствах выглядит
+            по-разному, а местами и вовсе как пустой квадрат.
+        -->
+        <ImageView
             android:id="@+id/btn_open_clipboard"
-            android:layout_width="wrap_content"
+            android:layout_width="48dp"
             android:layout_height="match_parent"
             android:layout_gravity="center_vertical|end"
-            android:gravity="center"
-            android:text="🗐"
-            android:textSize="20sp"
-            android:textColor="@color/key_icon"
-            android:paddingStart="16dp"
-            android:paddingEnd="20dp"
+            android:layout_marginEnd="6dp"
+            android:scaleType="center"
+            android:src="@drawable/ic_clipboard"
+            android:contentDescription="@string/clipboard_open"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
             android:clickable="true"
             android:focusable="true" />
 

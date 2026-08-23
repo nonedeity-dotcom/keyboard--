@@ -1,15 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    Значения сверены с фотографией референсной клавиатуры.
+
+    Фон #0F0F0F подтверждён дважды: он извлечён из ресурсов APK
+    (skin_black_keyboard_background_color) и сходится с фото, если снять
+    засветку съёмки — на фото фон измеряется как #252525, то есть поднят
+    примерно на 22 уровня.
+
+    А вот цвет клавиши раньше был взят из ресурса key_background_lxx_dark
+    (#263238) — это стоковый цвет AOSP LatinIME, но НЕ тот скин, что на
+    фото: там клавиша нейтрально-серая #595959, то есть #434343 после
+    снятия той же засветки. Синеватый и слишком тёмный #263238 давал
+    разделение клавиши и фона всего 1.46:1 против 2.19:1 у референса —
+    из-за этого клавиатура выглядела мутной и плоской.
+-->
 <resources>
     <color name="keyboard_bg">#0F0F0F</color>
     <color name="top_bar_bg">#0F0F0F</color>
-    <color name="key_bg">#263238</color>
-    <color name="key_bg_special">#37474F</color>
-    <color name="key_bg_accent">#2F6FE4</color>
-    <color name="key_text">#DFDFDF</color>
-    <color name="key_hint">#7F7F7F</color>
-    <color name="key_icon">#C9CACD</color>
+
+    <!-- Обычная клавиша: 1.94:1 к фону (референс 2.19:1). -->
+    <color name="key_bg">#434343</color>
+    <!-- Служебные клавиши тусклее буквенных, как и у референса. -->
+    <color name="key_bg_special">#2B2B2B</color>
+    <!-- Нажатие ПОДСВЕЧИВАЕТ клавишу. Раньше для этого
+         переиспользовался key_bg_special, но теперь он темнее
+         обычной клавиши, и нажатие затемняло бы её. -->
+    <color name="key_bg_pressed">#5C5C5C</color>
+    <color name="key_bg_accent">#3B7DE0</color>
+
+    <color name="key_text">#F1F1F1</color>
+    <color name="key_hint">#9BA1A6</color>
+    <color name="key_icon">#DADCE0</color>
+
     <color name="panel_bg">#0F0F0F</color>
-    <color name="clip_item_bg">#263238</color>
+    <color name="clip_item_bg">#2B2B2B</color>
     <color name="divider">#2A2A2A</color>
     <color name="ic_launcher_background">#1E1F22</color>
 </resources>
